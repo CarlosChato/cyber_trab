@@ -1,6 +1,7 @@
 import tkinter as tk
 import json 
 from tkinter import messagebox
+from MainPage import MainPage
 
  
 class MyApp(tk.Tk):
@@ -93,6 +94,9 @@ class SignUp(tk.Frame):
 
         if pass1 != pass2:
             messagebox.showerror("Error","Passwords have to be the same")
+
+        if len(pass1) <=5:
+            messagebox.showerror("Error","Passwords have to have five caracters minimun")
         
         if len(email)<= 0:
             messagebox.showerror("Error","It isn't an email")
@@ -102,20 +106,47 @@ class SignUp(tk.Frame):
         
         signed = self.check_already_signed(user,email)
 
-        
-            
-    def check_already_signed(self, user, email):
+        if signed==True:
+            self.add_user(user, email, pass1, controller)
 
-        with open("trab1/store_login/data.json") as f:
+        elif signed=="user":
+            messagebox.showerror("Error","User is already registered")
+        elif signed=="email":
+            messagebox.showerror("Error","Email is already registered")
+
+    def add_user(self, user, email, pwd, controller):
+        data2={"name": user, "pwd": pwd, "email": email}
+        with open("trab1/store_login/data.json", "w") as outfile:
             try:
-                data = json.load(f)
-
+                json.dump(data2, outfile)
+                print("he pasado")
+            
             except:
-                return True
+                print("error")
+        
+        
+
+
+        controller.show_frame(MainPage)            
+                
+
+            
+    def check_already_signed(self, name, email):
+        try:
+            with open("trab1/store_login/data.json") as f:
+                try:
+                    data = json.load(f)
+
+                except:
+                    return True
+        except:
+            messagebox.showerror("Error","Error: the file doesn't exist")
 
         for user in data:
-            if user == user["name"] or email == user["email"]:
-                return False
+            if name == user["name"]: 
+                return "user"
+            if email == user["email"]:
+                return "email"
         return True
 
 
@@ -162,10 +193,7 @@ class LogIn(tk.Frame):
             messagebox.showerror("Error","Wrong username or password")
 
         
-class MainPage(tk.Frame):
 
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
 
         
         
