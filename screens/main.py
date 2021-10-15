@@ -116,13 +116,13 @@ class SignUp(tk.Frame):
 
     def add_user(self, user, email, pwd, controller):
         data2={"name": user, "pwd": pwd, "email": email}
-        with open("trab1/store_login/data.json", "w") as outfile:
-            try:
-                json.dump(data2, outfile)
-                print("he pasado")
-            
-            except:
-                print("error")
+        with open("store_login/data.json", "r") as outfile:
+            data = json.load(outfile)
+
+        data.append(data2)
+
+        with open("store_login/data.json", "w") as file:
+            json.dump(data, file)
         
         
 
@@ -133,7 +133,7 @@ class SignUp(tk.Frame):
             
     def check_already_signed(self, name, email):
         try:
-            with open("trab1/store_login/data.json") as f:
+            with open("store_login/data.json") as f:
                 try:
                     data = json.load(f)
 
