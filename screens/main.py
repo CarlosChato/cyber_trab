@@ -3,6 +3,10 @@ import json
 from tkinter import messagebox
 from MainPage import MainPage
 
+import os
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+from cryptography.fernet import Fernet
  
 class MyApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -120,8 +124,9 @@ class SignUp(tk.Frame):
             data = json.load(outfile)
 
         data.append(data2)
+        
 
-        with open("store_login/data.json", "w") as file:
+        with open("store_login/data.json", "w",newline="\r\n") as file:
             json.dump(data, file)
         
         
@@ -172,7 +177,7 @@ class LogIn(tk.Frame):
 
     def check_user(self,name,pwd,controller):
 
-        with open("trab1/store_login/data.json") as f:
+        with open("store_login/data.json") as f:
             try:
                 data = json.load(f)
 
