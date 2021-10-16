@@ -1,10 +1,11 @@
 import tkinter as tk
 import json 
 from tkinter import messagebox
-from MainPage import MainPage
 
 import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from cryptography.fernet import Fernet
 
@@ -57,6 +58,8 @@ class Home(tk.Frame):
 class SignUp(tk.Frame):
 
     def __init__(self, parent, controller):
+
+        self.user = None
 
         tk.Frame.__init__(self, parent)
 
@@ -119,7 +122,24 @@ class SignUp(tk.Frame):
             messagebox.showerror("Error","Email is already registered")
 
     def add_user(self, user, email, pwd, controller):
-        data2={"name": user, "pwd": pwd, "email": email}
+        self.user = user
+
+        salt_pass = os.urandom(16)
+
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt_pass,
+            iterations=100000,
+        )
+
+        key = kdf.derive(bytes(pwd,encoding='utf8'))
+
+        print(key)
+        print(str(key))
+        print(bytes(str(key),encoding='utf8'))
+
+        data2={"name": user, "pwd": str(key), "email": email}
         with open("store_login/data.json", "r") as outfile:
             data = json.load(outfile)
 
@@ -132,7 +152,7 @@ class SignUp(tk.Frame):
         
 
 
-        controller.show_frame(MainPage)            
+        controller.show_frame(MainPage)
                 
 
             
@@ -198,18 +218,6 @@ class LogIn(tk.Frame):
         else:
             messagebox.showerror("Error","Wrong username or password")
 
-class MainPage(tk.Frame):
-    ## Recordar de poner un campo en el json de texto
-
-    def __init__(self, parent, controller):
-
-        tk.Frame.__init__(self, parent)
-
-        note_butt = tk.Button(self, text="Note", width=20, height=3,
-                                command=lambda:controller.show_frame(WriteNote))
-
-
-        note_butt.pack(pady=(200,10),padx=200) #padding 200px for top and 10 px for bot
 
 class WriteNote(tk.Frame):
 
@@ -218,20 +226,34 @@ class WriteNote(tk.Frame):
         entry_note = tk.Entry(self,  width=40, height = 40)
     
         note_butt = tk.Button(self, text="Add Note", width=20, height=3,
-                                command=lambda:controller.write_note(entry_note.get))
+                                command=lambda:controller.write_note(entry_note.get()))
 
-    
+    def write_note(self, note):
+        with open("store_login/data.json", "r") as f:
+            try:
+                data = json.load(f)
+            
+            except:
+                print("hoao")
+
+        print("")
 
 
+class MainPage(SignUp, tk.Frame):
+
+    def __init__(self, parent, controller):
         
+        tk.Frame.__init__(self, parent)
+        #self.user = SignUp.user
+
+        note_butt = tk.Button(self, text="Note", width=20, height=3,
+                                command=lambda:controller.show_frame(WriteNote))
 
 
+        note_butt.pack(pady=(200,10),padx=200) #padding 200px for top and 10 px for bot
+
+        #print(self.user)
         
-        
-
-
-
-
         
 
 app = MyApp()
