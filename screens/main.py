@@ -7,7 +7,7 @@ import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from cryptography.fernet import Fernet
- 
+
 class MyApp(tk.Tk):
     def __init__(self, *args, **kwargs):
 
@@ -126,7 +126,7 @@ class SignUp(tk.Frame):
         data.append(data2)
         
 
-        with open("store_login/data.json", "w",newline="\r\n") as file:
+        with open("store_login/data.json", "w") as file:
             json.dump(data, file)
         
         
@@ -138,7 +138,7 @@ class SignUp(tk.Frame):
             
     def check_already_signed(self, name, email):
         try:
-            with open("store_login/data.json") as f:
+            with open("store_login/data.json", "r") as f:
                 try:
                     data = json.load(f)
 
@@ -177,11 +177,12 @@ class LogIn(tk.Frame):
 
     def check_user(self,name,pwd,controller):
 
-        with open("store_login/data.json") as f:
+        with open("store_login/data.json", "r") as f:
             try:
                 data = json.load(f)
 
             except:
+                print("hoao")
                 messagebox.showerror("Error","Wrong username or password")
 
 
@@ -196,6 +197,31 @@ class LogIn(tk.Frame):
 
         else:
             messagebox.showerror("Error","Wrong username or password")
+
+class MainPage(tk.Frame):
+    ## Recordar de poner un campo en el json de texto
+
+    def __init__(self, parent, controller):
+
+        tk.Frame.__init__(self, parent)
+
+        note_butt = tk.Button(self, text="Note", width=20, height=3,
+                                command=lambda:controller.show_frame(WriteNote))
+
+
+        note_butt.pack(pady=(200,10),padx=200) #padding 200px for top and 10 px for bot
+
+class WriteNote(tk.Frame):
+
+    def __init__(self, parent, controller):
+        user = tk.Label(self, text="note", width=20, height=2)
+        entry_name = tk.Entry(self,  width=40, height = 40)
+    
+        note_butt = tk.Button(self, text="Add Note", width=20, height=3,
+                                command=lambda:controller.write_note())
+
+    
+
 
         
 
