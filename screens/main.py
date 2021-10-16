@@ -215,10 +215,10 @@ class WriteNote(tk.Frame):
 
     def __init__(self, parent, controller):
         user = tk.Label(self, text="note", width=20, height=2)
-        entry_name = tk.Entry(self,  width=40, height = 40)
+        entry_note = tk.Entry(self,  width=40, height = 40)
     
         note_butt = tk.Button(self, text="Add Note", width=20, height=3,
-                                command=lambda:controller.write_note())
+                                command=lambda:controller.write_note(entry_note.get))
 
     
 
