@@ -3,6 +3,7 @@ import json
 import os
 import tkinter as tk
 from tkinter import messagebox
+from tkinter.constants import SINGLE
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -25,7 +26,7 @@ class MyApp(tk.Tk):
 
         self.frames = {}
 
-        for F in (Home, LogIn, MainPage,SignUp):#we have to set all the screens into ()
+        for F in (Home, LogIn, MainPage,SignUp, WriteNote):#we have to set all the screens into ()
             
             frame = F(container,self)
 
@@ -238,11 +239,22 @@ class LogIn(tk.Frame):
 class WriteNote(tk.Frame):
 
     def __init__(self, parent, controller):
-        user = tk.Label(self, text="note", width=20, height=2)
-        entry_note = tk.Entry(self,  width=40, height = 40)
+        tk.Frame.__init__(self, parent)
+        note = tk.Label(self, text="note", width=20, height=2)
+        entry_note = tk.Entry(self,  width=40)
+        date = tk.Label(self, text="date", width=20, height=2)
+        entry_date = tk.Entry(self,  width=40)
     
         note_butt = tk.Button(self, text="Add Note", width=20, height=3,
-                                command=lambda:controller.write_note(entry_note.get()))
+                                command=lambda:self.write_note(entry_note.get(), entry_date.get()))
+
+        note.grid(row=0,column=1,pady=(50,5),padx=(20,1))
+        entry_note.grid(row=0,column=4,pady=(50,5))
+        date.grid(row=2,column=1,pady=(50,5),padx=(20,1))
+        entry_date.grid(row=2,column=4,pady=(50,5))
+
+        note_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1)) 
+
 
     def write_note(self, note):
         with open("store_login/data.json", "r") as f:
@@ -255,15 +267,16 @@ class WriteNote(tk.Frame):
         print("")
 
 
-class MainPage(SignUp, tk.Frame):
+class MainPage(tk.Frame):
 
     def __init__(self, parent, controller):
         
         tk.Frame.__init__(self, parent)
         #self.user = SignUp.user
 
-        note_butt = tk.Button(self, text="Note", width=20, height=3,
+        note_butt = tk.Button(self, text="Add note/edit note", width=20, height=3,
                                 command=lambda:controller.show_frame(WriteNote))
+        
 
 
         note_butt.pack(pady=(200,10),padx=200) #padding 200px for top and 10 px for bot
