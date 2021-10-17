@@ -1,13 +1,14 @@
+import base64
+import json
+import os
 import tkinter as tk
-import json 
 from tkinter import messagebox
 
-import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from cryptography.fernet import Fernet
 
 class MyApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -133,13 +134,14 @@ class SignUp(tk.Frame):
             iterations=100000,
         )
 
-        key = kdf.derive(bytes(pwd,encoding='utf8'))
+        key = kdf.derive(pwd.encode('latin-1'))
 
-        print(key)
-        print(str(key))
-        print(bytes(str(key),encoding='utf8'))
+        key2 = key.decode('latin-1')
 
-        data2={"name": user, "pwd": str(key), "email": email}
+        salt_pass2 = salt_pass.decode("latin-1")
+        
+
+        data2={"name": user, "pwd": key2, "email": email, "salt_p":salt_pass2}
         with open("store_login/data.json", "r") as outfile:
             data = json.load(outfile)
 
@@ -202,13 +204,27 @@ class LogIn(tk.Frame):
                 data = json.load(f)
 
             except:
-                print("hoao")
                 messagebox.showerror("Error","Wrong username or password")
 
 
         found = False
         for user in data:
-            if name == user["name"] and pwd == user["pwd"]:
+            if name == user["name"]:
+                pass_e = user["pwd"]
+                salt_e = user["salt_p"]
+                kdf = PBKDF2HMAC(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=salt_e.encode("latin-1"),
+                    iterations=100000,
+                )
+                
+                print(pwd.encode("latin-1"))
+                print(pass_e.encode("latin-1"))
+                try:
+                    kdf.verify(pwd.encode("latin-1"),pass_e.encode("latin-1"))
+                except:
+                    break
                 found = True
                 break
         
