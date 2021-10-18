@@ -375,25 +375,25 @@ class DeleteNote(tk.Frame):
 
 
         # User is none, to have the global user after this (It initializes the self.user)
-        self.user = None
+        # self.user = None
         
-        rows = []
+        # rows = []
 
-        for i in range(5):
+        # for i in range(5):
 
-            cols = []
+        #     cols = []
 
-            for j in range(4):
+        #     for j in range(4):
 
-                e = Entry(relief="groove")
+        #         e = Entry(relief="groove")
 
-                e.grid(row=i, column=j, sticky="nsew")
+        #         e.grid(row=i, column=j, sticky="nsew")
 
-                e.insert("end", '%d.%d' % (i, j))
+        #         e.insert("end", '%d.%d' % (i, j))
 
-                cols.append(e)
+        #         cols.append(e)
 
-            rows.append(cols)
+        #     rows.append(cols)
         #note_butt = tk.Button(self, text="Add Note", width=20, height=3,
                                 #command=lambda:self.show_notes()) 
         
@@ -405,29 +405,13 @@ class DeleteNote(tk.Frame):
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
 
-        # for i in data:
-        #     if i["user"] == self.user:
+        for i in data:
+            if i["user"] == self.user:
                 
-        #         tree.insert(" ", "end", text=str(cont), values=(str(cont), i["notes"]))
+                tree.insert(" ", "end", text=str(cont), values=(str(cont), i["notes"]))
 
-        # tree.pack()
-        rows = []
-
-        for i in range(5):
-
-            cols = []
-
-            for j in range(4):
-
-                e = Entry(relief="groove")
-
-                e.grid(row=i, column=j, sticky="nsew")
-
-                e.insert("end", '%d.%d' % (i, j))
-
-                cols.append(e)
-
-            rows.append(cols)
+        tree.pack()
+        
 
 class MainPage(tk.Frame):
     """ This is the frame for the Main Page duty """
