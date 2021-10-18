@@ -31,7 +31,7 @@ class MyApp(tk.Tk):
         self.frames = {}
 
         # Loop to initialize all the classes and save it into a dictionary
-        for F in (Home, LogIn, MainPage, SignUp, WriteNote, DeleteNote):#we have to set all the screens into ()
+        for F in (Home, LogIn, MainPage, SignUp, WriteNote, ShowNote):#we have to set all the screens into ()
             
             frame = F(container,self)
 
@@ -75,8 +75,8 @@ class Home(tk.Frame):
                                  command=lambda:controller.show_frame(SignUp))
 
         # It will place the buttons correctly
-        login_butt.pack(pady=(200,10),padx=200) #padding 200px for top and 10 px for bot
-        sign_up_butt.pack(pady=(10,200),padx=200) #padding like the last one, but inverse
+        login_butt.grid(pady=(200,10),padx=200) #padding 200px for top and 10 px for bot
+        sign_up_butt.grid(pady=(10,200),padx=200) #padding like the last one, but inverse
 
 
 class SignUp(tk.Frame):
@@ -366,7 +366,8 @@ class WriteNote(tk.Frame):
         with open("store_login/notes.json", "w") as file:
             json.dump(data, file)
 
-class DeleteNote(tk.Frame):
+class ShowNote(tk.Frame):
+    """ This is the frame for the Write Note duty """
 
     def __init__(self, parent, controller):
 
@@ -374,44 +375,33 @@ class DeleteNote(tk.Frame):
         tk.Frame.__init__(self, parent)
 
 
-        # User is none, to have the global user after this (It initializes the self.user)
-        # self.user = None
-        
-        # rows = []
+        # User is none, to have the global user after this (we)
+        self.user = None
 
-        # for i in range(5):
+        # Declaration of the entries for the note and date of the new note
+        note = tk.Label(self, text="My notes", width=20, height=2)
 
-        #     cols = []
-
-        #     for j in range(4):
-
-        #         e = Entry(relief="groove")
-
-        #         e.grid(row=i, column=j, sticky="nsew")
-
-        #         e.insert("end", '%d.%d' % (i, j))
-
-        #         cols.append(e)
-
-        #     rows.append(cols)
-        #note_butt = tk.Button(self, text="Add Note", width=20, height=3,
-                                #command=lambda:self.show_notes()) 
-        
-        #note_butt.grid(row= 0,column=4,pady=(50,5),padx=(20,1))
-
-                
-    def show_notes(self):
+        note.grid(row=0,column=1,pady=(50,5),padx=(20,1))
 
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
 
+        count = 0
         for i in data:
             if i["user"] == self.user:
+                text.insert(tk.END, "{}\n".format(i["notes"]))
                 
-                tree.insert(" ", "end", text=str(cont), values=(str(cont), i["notes"]))
+        # for i in data:
+        #     if i["user"] == self.user:
+        #         [note + str(count)] = tk.Label(self, text = i["notes"])
+        #         count += 1
 
-        tree.pack()
+        # for i in range(count):
+        #     [note + str(i)].grid(row = count, column = 4, width = 20, height = 4)
+
         
+  
+
 
 class MainPage(tk.Frame):
     """ This is the frame for the Main Page duty """
@@ -427,7 +417,7 @@ class MainPage(tk.Frame):
                                 command=lambda:controller.show_frame(WriteNote,self.user))
 
         note_butt1 = tk.Button(self, text="Delete note", width=20, height=3,
-                                command=lambda:controller.show_frame(DeleteNote,self.user))
+                                command=lambda:controller.show_frame(ShowNote,self.user))
         
         note_butt2 = tk.Button(self, text="Mostrar user", width=20, height=3,
                                 command=lambda:self.mostrar_user())
