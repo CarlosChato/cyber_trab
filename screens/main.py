@@ -1,18 +1,24 @@
-import tkinter as tk
-import json 
-from tkinter import messagebox
-from MainPage import MainPage
-
+import base64
+import json
 import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+import tkinter as tk
+from tkinter import messagebox,Entry
+from tkinter.constants import SINGLE
 
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+#This is the initial class, which make the principal window and inicialitation of all windows
 class MyApp(tk.Tk):
+    #constructor method
     def __init__(self, *args, **kwargs):
 
+        #we have to call to the parent's init
         tk.Tk.__init__(self, *args, **kwargs)
 
+        #define of the container
         container = tk.Frame(self, highlightcolor="red")
         container.pack( side = "top", fill = "both", expand = True )
 
@@ -21,9 +27,11 @@ class MyApp(tk.Tk):
         container.grid_rowconfigure(0,weight = 1)
         container.columnconfigure(0,weight = 1)
 
+        #Create a dictionary about frames (the differents windows will be classes)
         self.frames = {}
 
-        for F in (Home, LogIn, MainPage,SignUp):#we have to set all the screens into ()
+        #we do a loop to initialize all the classes and save it into a dictionary
+        for F in (Home, LogIn, MainPage, SignUp, WriteNote):#we have to set all the screens into ()
             
             frame = F(container,self)
 
@@ -31,11 +39,23 @@ class MyApp(tk.Tk):
 
             frame.grid(row=0,column=0, sticky="nsew")
 
+        #The first frame to show is Home
         self.show_frame(Home)
+
+        #function to change the title of the app
+        self.make_widgets()
+
+    def make_widgets(self):
+        
+        self.winfo_toplevel().title("My Diario")
     
-    def show_frame(self, cont):
+    #Function to change the differents frames when it'll necessary
+    def show_frame(self, cont, user = None):
 
         frame = self.frames[cont]
+        if user != None:
+            frame.user = user
+            
         frame.tkraise()
 
 class Home(tk.Frame):
@@ -76,6 +96,8 @@ class SignUp(tk.Frame):
                             command=lambda:self.checks(entry_name.get(), 
                             entry_email.get(),entry_pass.get(),
                             entry_pass2.get(), controller))
+
+        back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(Home))
         
         #//////////////// UI section/////////////////////
 
@@ -92,6 +114,8 @@ class SignUp(tk.Frame):
         entry_pass2.grid(row=6,column=4,pady=(50,5))
 
         sing_up.grid(row=8,column=4,pady=(50,5),padx=(20,1))
+        
+        back_butt.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
 
     def checks(self, user, email, pass1, pass2, controller):
         #Check all the data of the sign up
@@ -119,7 +143,27 @@ class SignUp(tk.Frame):
             messagebox.showerror("Error","Email is already registered")
 
     def add_user(self, user, email, pwd, controller):
-        data2={"name": user, "pwd": pwd, "email": email}
+        self.user = user
+        
+        user = user
+
+        salt_pass = os.urandom(16)
+
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt_pass,
+            iterations=100000,
+        )
+
+        key = kdf.derive(pwd.encode('latin-1'))
+
+        key2 = key.decode('latin-1')
+
+        salt_pass2 = salt_pass.decode("latin-1")
+        
+
+        data2={"name": user, "pwd": key2, "email": email, "salt_p":salt_pass2}
         with open("store_login/data.json", "r") as outfile:
             data = json.load(outfile)
 
@@ -132,7 +176,7 @@ class SignUp(tk.Frame):
         
 
 
-        controller.show_frame(MainPage)            
+        controller.show_frame(MainPage, user)
                 
 
             
@@ -159,6 +203,8 @@ class LogIn(tk.Frame):
 
     def __init__(self, parent, controller):
 
+        
+
         tk.Frame.__init__(self, parent)
 
         user = tk.Label(self, text="user", width=20, height=2)
@@ -167,12 +213,16 @@ class LogIn(tk.Frame):
         entry_pass = tk.Entry(self,width=40,show="*")
         login_butt = tk.Button(self, text="Login", width=5, height=2,
                                command=lambda:self.check_user(entry_name.get(), entry_pass.get(), controller))
+                               
+        back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(Home))
 
         user.grid(row=0,column=1,pady=(50,5),padx=(20,1)) 
         entry_name.grid(row=0,column=4,pady=(50,5)) 
         password.grid(row=2,column=1,pady=(50,5),padx=(20,1))
         entry_pass.grid(row=2,column=4,pady=(50,5))
         login_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1))
+
+        back_butt.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
 
 
     def check_user(self,name,pwd,controller):
@@ -182,56 +232,102 @@ class LogIn(tk.Frame):
                 data = json.load(f)
 
             except:
-                print("hoao")
                 messagebox.showerror("Error","Wrong username or password")
 
 
         found = False
         for user in data:
-            if name == user["name"] and pwd == user["pwd"]:
+            if name == user["name"]:
+                pass_e = user["pwd"]
+                salt_e = user["salt_p"]
+                kdf = PBKDF2HMAC(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=salt_e.encode("latin-1"),
+                    iterations=100000,
+                )
+                
+                print(pwd.encode("latin-1"))
+                print(pass_e.encode("latin-1"))
+                try:
+                    kdf.verify(pwd.encode("latin-1"),pass_e.encode("latin-1"))
+                except:
+                    break
                 found = True
                 break
         
         if found:    
-            controller.show_frame(MainPage)
+            controller.show_frame(MainPage,name)
 
         else:
             messagebox.showerror("Error","Wrong username or password")
 
-class MainPage(tk.Frame):
-    ## Recordar de poner un campo en el json de texto
-
-    def __init__(self, parent, controller):
-
-        tk.Frame.__init__(self, parent)
-
-        note_butt = tk.Button(self, text="Note", width=20, height=3,
-                                command=lambda:controller.show_frame(WriteNote))
-
-
-        note_butt.pack(pady=(200,10),padx=200) #padding 200px for top and 10 px for bot
 
 class WriteNote(tk.Frame):
 
     def __init__(self, parent, controller):
-        user = tk.Label(self, text="note", width=20, height=2)
-        entry_note = tk.Entry(self,  width=40, height = 40)
+        tk.Frame.__init__(self, parent)
+        note = tk.Label(self, text="note", width=20, height=2)
+        entry_note = tk.Entry(self,  width=40)
+        date = tk.Label(self, text="date", width=20, height=2)
+        entry_date = tk.Entry(self,  width=40)
     
         note_butt = tk.Button(self, text="Add Note", width=20, height=3,
-                                command=lambda:controller.write_note(entry_note.get))
+                                command=lambda:self.write_note(entry_note.get(), entry_date.get()))
+        back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(MainPage))
 
-    
+        note.grid(row=0,column=1,pady=(50,5),padx=(20,1))
+        entry_note.grid(row=0,column=4,pady=(50,5))
+        date.grid(row=2,column=1,pady=(50,5),padx=(20,1))
+        entry_date.grid(row=2,column=4,pady=(50,5))
+
+        note_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1)) 
+
+        back_butt.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
 
 
+    def write_note(self, note):
+        with open("store_login/data.json", "r") as f:
+            try:
+                data = json.load(f)
+            
+            except:
+                print("hoao")
+
+        print("")
+
+
+class MainPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        
+        tk.Frame.__init__(self, parent)
+        #self.user = SignUp.user
+
+        note_butt = tk.Button(self, text="Add note/edit note", width=20, height=3,
+                                command=lambda:controller.show_frame(WriteNote))
+        
+        note_butt2 = tk.Button(self, text="Mostrar user", width=20, height=3,
+                                command=lambda:self.mostrar_user())
+                                
+        back_butt = tk.Button(self, text="Cerrar sesión", width=20, height=2, command=lambda:controller.show_frame(Home))
+        
+        
+        self.user = None
+
+        note_butt.grid(row=0, column=4,pady=(50,5),padx=(20,1)) #padding 200px for top and 10 px for bot
+        note_butt2.grid(row=2, column=4,pady=(50,5),padx=(20,1))
+        back_butt.grid(row=6, column= 4, pady=(50,5),padx=(20,1))
+
+        
         
 
 
+    def mostrar_user(self):
+        print("mostrar user: ", self.user)
+
         
         
-
-
-
-
         
 
 app = MyApp()
