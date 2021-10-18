@@ -2,7 +2,7 @@ import base64
 import json
 import os
 import tkinter as tk
-from tkinter import messagebox,Entry
+from tkinter import Label, messagebox,Entry, ttk
 from tkinter.constants import SINGLE
 
 from cryptography.fernet import Fernet
@@ -31,7 +31,7 @@ class MyApp(tk.Tk):
         self.frames = {}
 
         # Loop to initialize all the classes and save it into a dictionary
-        for F in (Home, LogIn, MainPage, SignUp, WriteNote):#we have to set all the screens into ()
+        for F in (Home, LogIn, MainPage, SignUp, WriteNote, DeleteNote):#we have to set all the screens into ()
             
             frame = F(container,self)
 
@@ -354,23 +354,80 @@ class WriteNote(tk.Frame):
         
         # exists the note of that day
         if is_note:
-            notes = data2["notes"]
-            notes.append(note)
-            data2["notes"] = notes
+            data2["notes"] = note
             data.append(data2)
         
         # case the note of that day doesn't exist
         else:
-            data2 = {"user": self.user, "date" : date, "notes": [note]}
+            data2 = {"user": self.user, "date" : date, "notes": note}
             data.append(data2)
         
 
         with open("store_login/notes.json", "w") as file:
             json.dump(data, file)
-        
 
-        
+class DeleteNote(tk.Frame):
 
+    def __init__(self, parent, controller):
+
+        # This will initialize the frame
+        tk.Frame.__init__(self, parent)
+
+
+        # User is none, to have the global user after this (It initializes the self.user)
+        self.user = None
+        
+        rows = []
+
+        for i in range(5):
+
+            cols = []
+
+            for j in range(4):
+
+                e = Entry(relief="groove")
+
+                e.grid(row=i, column=j, sticky="nsew")
+
+                e.insert("end", '%d.%d' % (i, j))
+
+                cols.append(e)
+
+            rows.append(cols)
+        #note_butt = tk.Button(self, text="Add Note", width=20, height=3,
+                                #command=lambda:self.show_notes()) 
+        
+        #note_butt.grid(row= 0,column=4,pady=(50,5),padx=(20,1))
+
+                
+    def show_notes(self):
+
+        with open("store_login/notes.json", "r") as outfile:
+            data = json.load(outfile)
+
+        # for i in data:
+        #     if i["user"] == self.user:
+                
+        #         tree.insert(" ", "end", text=str(cont), values=(str(cont), i["notes"]))
+
+        # tree.pack()
+        rows = []
+
+        for i in range(5):
+
+            cols = []
+
+            for j in range(4):
+
+                e = Entry(relief="groove")
+
+                e.grid(row=i, column=j, sticky="nsew")
+
+                e.insert("end", '%d.%d' % (i, j))
+
+                cols.append(e)
+
+            rows.append(cols)
 
 class MainPage(tk.Frame):
     """ This is the frame for the Main Page duty """
@@ -384,6 +441,9 @@ class MainPage(tk.Frame):
 
         note_butt = tk.Button(self, text="Add note/edit note", width=20, height=3,
                                 command=lambda:controller.show_frame(WriteNote,self.user))
+
+        note_butt1 = tk.Button(self, text="Delete note", width=20, height=3,
+                                command=lambda:controller.show_frame(DeleteNote,self.user))
         
         note_butt2 = tk.Button(self, text="Mostrar user", width=20, height=3,
                                 command=lambda:self.mostrar_user())
@@ -394,7 +454,8 @@ class MainPage(tk.Frame):
         
 
         note_butt.grid(row=0, column=4,pady=(50,5),padx=(20,1)) #padding 200px for top and 10 px for bot
-        note_butt2.grid(row=2, column=4,pady=(50,5),padx=(20,1))
+        note_butt1.grid(row=2, column=4,pady=(50,5),padx=(20,1))
+        note_butt2.grid(row=4, column=4,pady=(50,5),padx=(20,1))
         back_butt.grid(row=6, column= 4, pady=(50,5),padx=(20,1))
 
         
