@@ -383,13 +383,12 @@ class ShowNote(tk.Frame):
 
         note.grid(row=0,column=1,pady=(50,5),padx=(20,1))
 
-        with open("store_login/notes.json", "r") as outfile:
-            data = json.load(outfile)
+        note_butt = tk.Button(self, text="Add Note", width=20, height=3,
+                                command=lambda:self.show_note(parent))
 
-        count = 0
-        for i in data:
-            if i["user"] == self.user:
-                text.insert(tk.END, "{}\n".format(i["notes"]))
+        note_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1)) 
+
+        
                 
         # for i in data:
         #     if i["user"] == self.user:
@@ -399,8 +398,22 @@ class ShowNote(tk.Frame):
         # for i in range(count):
         #     [note + str(i)].grid(row = count, column = 4, width = 20, height = 4)
 
+    def show_note(self, parent):
         
-  
+        with open("store_login/notes.json", "r") as outfile:
+            data = json.load(outfile)
+
+        lbl = Label(parent, text = data)
+        lbl.grid(row=0, column=0)
+
+        # count = 0
+        # print("tamo")
+        # for i in data:
+        #     print("for")
+        #     if i["user"] == self.user:
+        #         print("hola")
+
+        #         #tk.Text.insert("end", "1.0", i["notes"])
 
 
 class MainPage(tk.Frame):
