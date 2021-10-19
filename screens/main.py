@@ -4,6 +4,7 @@ import os
 import tkinter as tk
 from tkinter import Label, messagebox,Entry, ttk
 from tkinter.constants import SINGLE
+import random
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -335,12 +336,37 @@ class WriteNote(tk.Frame):
         note_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1)) 
 
         back_butt.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
+        
 
 
     def write_note(self, note, date):
         
         is_note = False
         data2 = None
+        
+        with open("store_login/data.json", "r") as outfile1:
+            data3 = json.load(outfile1)
+
+        for i in data3:
+            if i["name"] == self.user:
+                pwd = i["pwd"]
+                pwd = pwd.encode("latin-1")
+                try:
+                    iv = i["iv"].encode("latin-1")
+
+            
+                except:
+                    iv = self.create_salt()
+                    iv = iv.encode("latin-1")
+
+        # if random.randint(1,10) == 5:
+        #     new_iv = self.create_salt()
+
+        cipher = Cipher(algorithms.AES(pwd), modes.CBC(iv))
+        encryptor = cipher.encryptor()
+        print(len(note.encode("latin-1")))
+        ct = encryptor.update(note.encode("latin-1")) + encryptor.finalize()    
+        print(ct)
         
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
@@ -366,6 +392,34 @@ class WriteNote(tk.Frame):
         with open("store_login/notes.json", "w") as file:
             json.dump(data, file)
 
+    def create_salt(self):
+
+        iv = os.urandom(16)
+
+        with open("store_login/data.json", "r") as outfile:
+            data3 = json.load(outfile)
+
+        print("tamo aca")
+        for i in data3:
+            if i["name"] == self.user:
+                iv = iv.decode("latin-1")
+                data3.remove(i)
+                i["iv"] = iv
+                data3.append(i)
+                break
+                
+        with open("store_login/data.json", "w") as outfile1:
+            json.dump(data3, outfile1)
+
+        return iv
+
+    #def change_iv_encrypt(self):
+        
+
+        
+        
+
+
 class ShowNote(tk.Frame):
     """ This is the frame for the Write Note duty """
 
@@ -385,6 +439,10 @@ class ShowNote(tk.Frame):
                                 command=lambda:self.show_note(parent))
 
         note_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1)) 
+        
+        # This is the return button
+        back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(Home))
+        back_butt.grid(row=15, column= 4, pady=(50,5),padx=(20,1))
 
     def show_note(self, parent):
         
@@ -400,7 +458,10 @@ class ShowNote(tk.Frame):
 
         note = Label(self, text=notes, width=20)
 
-        note.grid(row=1,column=1,pady=(50,5),padx=(20,1))
+        note.grid(row=1,column=4,pady=(50,5),padx=(20,1))
+
+        entry_note = tk.Entry(self,  width=40)
+        entry_note.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
 
 class MainPage(tk.Frame):
     """ This is the frame for the Main Page duty """
@@ -426,10 +487,10 @@ class MainPage(tk.Frame):
         
         
 
-        note_butt.grid(row=0, column=4,pady=(50,5),padx=(20,1)) #padding 200px for top and 10 px for bot
-        note_butt1.grid(row=2, column=4,pady=(50,5),padx=(20,1))
-        note_butt2.grid(row=4, column=4,pady=(50,5),padx=(20,1))
-        back_butt.grid(row=6, column= 4, pady=(50,5),padx=(20,1))
+        note_butt.grid(row=0, column=4,pady=(50,5),padx=(20,10)) #padding 200px for top and 10 px for bot
+        note_butt1.grid(row=2, column=4,pady=(50,5),padx=(20,10))
+        note_butt2.grid(row=4, column=4,pady=(50,5),padx=(20,10))
+        back_butt.grid(row=6, column= 4, pady=(50,5),padx=(20,10))
 
         
         
