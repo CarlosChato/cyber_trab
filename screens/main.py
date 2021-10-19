@@ -379,42 +379,28 @@ class ShowNote(tk.Frame):
         self.user = None
 
         # Declaration of the entries for the note and date of the new note
-        note = tk.Label(self, text="My notes", width=20, height=2)
+        
 
-        note.grid(row=0,column=1,pady=(50,5),padx=(20,1))
-
-        note_butt = tk.Button(self, text="Add Note", width=20, height=3,
+        note_butt = tk.Button(self, text="Show notes", width=20, height=3,
                                 command=lambda:self.show_note(parent))
 
         note_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1)) 
-
-        
-                
-        # for i in data:
-        #     if i["user"] == self.user:
-        #         [note + str(count)] = tk.Label(self, text = i["notes"])
-        #         count += 1
-
-        # for i in range(count):
-        #     [note + str(i)].grid(row = count, column = 4, width = 20, height = 4)
 
     def show_note(self, parent):
         
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
 
-        lbl = Label(parent, text = data)
-        lbl.grid(row=0, column=0)
+        notes = "\n"
+        cont = 1
+        for i in data:
+            if i["user"] == self.user:
+                notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + i["notes"] + "\n"
+                cont += 1
 
-        # count = 0
-        # print("tamo")
-        # for i in data:
-        #     print("for")
-        #     if i["user"] == self.user:
-        #         print("hola")
+        note = Label(self, text=notes, width=20)
 
-        #         #tk.Text.insert("end", "1.0", i["notes"])
-
+        note.grid(row=1,column=1,pady=(50,5),padx=(20,1))
 
 class MainPage(tk.Frame):
     """ This is the frame for the Main Page duty """
