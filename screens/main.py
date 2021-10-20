@@ -33,7 +33,7 @@ class MyApp(tk.Tk):
         self.frames = {}
 
         # Loop to initialize all the classes and save it into a dictionary
-        for F in (Home, LogIn, MainPage, SignUp, WriteNote, ShowNote):#we have to set all the screens into ()
+        for F in (Home, LogIn, MainPage, SignUp, WriteNote, ShowNote, DeleteNote):#we have to set all the screens into ()
             
             frame = F(container,self)
 
@@ -192,13 +192,7 @@ class SignUp(tk.Frame):
 
         with open("store_login/data.json", "w") as file:
             json.dump(data, file)
-        
-        
-
-        self.entry_name.forget()
-        self.entry_pass.forget()
-        self.entry_pass2.forget()
-        self.entry_email.forget()
+    
         controller.show_frame(MainPage, user)
                 
 
@@ -440,11 +434,11 @@ class ShowNote(tk.Frame):
         note_butt = tk.Button(self, text="Show notes", width=20, height=3,
                                 command=lambda:self.show_note(parent))
 
-        note_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1)) 
+        note_butt.grid(row= 4,column=4,pady=(50,5),padx=200)
         
         # This is the return button
         back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(MainPage))
-        back_butt.grid(row=15, column= 4, pady=(50,5),padx=(20,1))
+        back_butt.grid(row=15, column= 4, pady=(50,5),padx=200)
 
     def show_note(self, parent):
         with open("store_login/data.json", "r") as outfile1:
@@ -476,8 +470,87 @@ class ShowNote(tk.Frame):
 
         note.grid(row=1,column=4,pady=(50,5),padx=(20,1))
 
+class DeleteNote(tk.Frame):
+
+    def __init__(self, parent, controller):
+
+        # This will initialize the frame
+        tk.Frame.__init__(self, parent)
+
+
+        # User is none, to have the global user after this (we)
+        self.user = None
+
+        # Declaration of the entries for the note and date of the new note
+
+        text_del = Label(self,text = "Introduce the date of the note you want to delete")
+        text_del.grid(row = 2, column=0, pady=(50,5), padx = 10)
+        
         entry_note = tk.Entry(self,  width=40)
-        entry_note.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
+        entry_note.grid(row = 2, column = 4, pady=(50,5), padx=10)
+
+        note_butt = tk.Button(self, text="Show notes", width=20, height=3,
+                                command=lambda:self.show_note(parent))
+
+        note_butt.grid(row= 4,column=4,pady=(50,5))
+
+        del_butt = tk.Button(self, text="Delete Note", width=20, height=3,
+                                command=lambda:self.delete(entry_note.get(), parent))
+
+        del_butt.grid(row= 6,column=4,pady=(50,5))
+        
+        # This is the return button
+        back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(MainPage))
+        back_butt.grid(row=15, column= 4, pady=(50,5))
+
+    def show_note(self, parent):
+        with open("store_login/data.json", "r") as outfile1:
+            data3 = json.load(outfile1)
+
+        for i in data3:
+            if i["name"] == self.user:
+                pwd = i["pwd"]
+                pwd = pwd.encode("latin-1")
+                iv = i["iv"].encode("latin-1")
+
+       
+        
+        
+        with open("store_login/notes.json", "r") as outfile:
+            data = json.load(outfile)
+
+        notes = "\n"
+        cont = 1
+        for i in data:
+            if i["user"] == self.user:
+                cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
+                decryptor = cipher.decryptor()
+                msg = decryptor.update(i["notes"].encode("latin-1")) + decryptor.finalize()
+                notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + msg.decode("latin-1") + "\n"
+                cont += 1
+
+        note = Label(self, text=notes, width=100)
+
+        note.grid(row=1,column=4,pady=(50,5))
+    
+    def delete(self, date, parent):
+        
+        with open("store_login/notes.json", "r") as outfile:
+            data = json.load(outfile)
+        
+        found = False
+        for i in data:
+            if i["user"] == self.user and i["date"] == date:
+                data.remove(i)
+                found = True
+            
+        if found:
+            with open("store_login/notes.json", "w") as outfile2:
+                json.dump(data, outfile2)
+
+            self.show_note(parent)
+        else:
+            messagebox.showinfo(title="Delete Error",message="There is no note with the date: " + date)
 
 class MainPage(tk.Frame):
     """ This is the frame for the Main Page duty """
@@ -492,11 +565,11 @@ class MainPage(tk.Frame):
         note_butt = tk.Button(self, text="Add note/edit note", width=20, height=3,
                                 command=lambda:controller.show_frame(WriteNote,self.user))
 
-        note_butt1 = tk.Button(self, text="Delete note", width=20, height=3,
+        note_butt1 = tk.Button(self, text="Show notes", width=20, height=3,
                                 command=lambda:controller.show_frame(ShowNote,self.user))
         
-        note_butt2 = tk.Button(self, text="Mostrar user", width=20, height=3,
-                                command=lambda:self.mostrar_user())
+        note_butt2 = tk.Button(self, text="Delete note", width=20, height=3,
+                                command=lambda:controller.show_frame(DeleteNote,self.user))
                                 
         back_butt = tk.Button(self, text="Cerrar sesión", width=20, height=2, command=lambda:controller.show_frame(Home))
         
