@@ -1,15 +1,16 @@
 import base64
 import json
 import os
-import tkinter as tk
-from tkinter import Label, messagebox,Entry, ttk
-from tkinter.constants import SINGLE
 import random
+import tkinter as tk
+from tkinter import Entry, Label, messagebox, ttk
+from tkinter.constants import SINGLE
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
 
 # This is the initial class, which make the principal window and inicialitation of all windows
 class MyApp(tk.Tk):
@@ -194,7 +195,10 @@ class SignUp(tk.Frame):
         
         
 
-
+        self.entry_name.forget()
+        self.entry_pass.forget()
+        self.entry_pass2.forget()
+        self.entry_email.forget()
         controller.show_frame(MainPage, user)
                 
 
@@ -362,11 +366,9 @@ class WriteNote(tk.Frame):
         # if random.randint(1,10) == 5:
         #     new_iv = self.create_salt()
 
-        cipher = Cipher(algorithms.AES(pwd), modes.CBC(iv))
+        cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
         encryptor = cipher.encryptor()
-        print(len(note.encode("latin-1")))
         ct = encryptor.update(note.encode("latin-1")) + encryptor.finalize()    
-        print(ct)
         
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
@@ -380,12 +382,12 @@ class WriteNote(tk.Frame):
         
         # exists the note of that day
         if is_note:
-            data2["notes"] = note
+            data2["notes"] = ct.decode("latin-1")
             data.append(data2)
         
         # case the note of that day doesn't exist
         else:
-            data2 = {"user": self.user, "date" : date, "notes": note}
+            data2 = {"user": self.user, "date" : date, "notes": ct.decode("latin-1")}
             data.append(data2)
         
 
@@ -441,10 +443,21 @@ class ShowNote(tk.Frame):
         note_butt.grid(row= 4,column=4,pady=(50,5),padx=(20,1)) 
         
         # This is the return button
-        back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(Home))
+        back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(MainPage))
         back_butt.grid(row=15, column= 4, pady=(50,5),padx=(20,1))
 
     def show_note(self, parent):
+        with open("store_login/data.json", "r") as outfile1:
+            data3 = json.load(outfile1)
+
+        for i in data3:
+            if i["name"] == self.user:
+                pwd = i["pwd"]
+                pwd = pwd.encode("latin-1")
+                iv = i["iv"].encode("latin-1")
+
+       
+        
         
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
@@ -453,10 +466,13 @@ class ShowNote(tk.Frame):
         cont = 1
         for i in data:
             if i["user"] == self.user:
-                notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + i["notes"] + "\n"
+                cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
+                decryptor = cipher.decryptor()
+                msg = decryptor.update(i["notes"].encode("latin-1")) + decryptor.finalize()
+                notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + msg.decode("latin-1") + "\n"
                 cont += 1
 
-        note = Label(self, text=notes, width=20)
+        note = Label(self, text=notes, width=100)
 
         note.grid(row=1,column=4,pady=(50,5),padx=(20,1))
 
@@ -487,10 +503,10 @@ class MainPage(tk.Frame):
         
         
 
-        note_butt.grid(row=0, column=4,pady=(50,5),padx=(20,10)) #padding 200px for top and 10 px for bot
-        note_butt1.grid(row=2, column=4,pady=(50,5),padx=(20,10))
-        note_butt2.grid(row=4, column=4,pady=(50,5),padx=(20,10))
-        back_butt.grid(row=6, column= 4, pady=(50,5),padx=(20,10))
+        note_butt.grid(row=0, column=4,pady=(10,10),padx=200) #padding 200px for top and 10 px for bot
+        note_butt1.grid(row=2, column=4,pady=(10,10),padx=200)
+        note_butt2.grid(row=4, column=4,pady=(10,10),padx=200)
+        back_butt.grid(row=6, column= 4, pady=(10,10),padx=200)
 
         
         
