@@ -426,13 +426,18 @@ class WriteNote(tk.Frame):
         with open("store_login/notes.json", "w") as file:
             json.dump(data, file)
 
+
+    # Function to create the Initialization Vector (iv)
     def create_salt(self):
 
+        # It generates a pseudorandom byte-string iv
         iv = os.urandom(16)
 
+        # It opens the data.json to load the data
         with open("store_login/data.json", "r") as outfile:
             data3 = json.load(outfile)
 
+        # Loop to search the user in the json and to add a iv asociated to the user
         for i in data3:
             if i["name"] == self.user:
                 iv = iv.decode("latin-1")
@@ -440,19 +445,18 @@ class WriteNote(tk.Frame):
                 i["iv"] = iv
                 data3.append(i)
                 break
-                
+
+        # It dumps the new data in the data.json        
         with open("store_login/data.json", "w") as outfile1:
             json.dump(data3, outfile1)
 
-        return iv
-
-    #def change_iv_encrypt(self):
+        # Returns the iv to use it later
+        return iv      
         
 
-        
-        
-
-
+#******************************************************************************************
+# Class ShowNote
+#******************************************************************************************
 class ShowNote(tk.Frame):
     """ This is the frame for the Write Note duty """
 
@@ -462,12 +466,10 @@ class ShowNote(tk.Frame):
         tk.Frame.__init__(self, parent)
 
 
-        # User is none, to have the global user after this (we)
+        # User is none, to have the global user after this
         self.user = None
 
-        # Declaration of the entries for the note and date of the new note
-        
-
+        # We create two buttons, one to show all the notes and the other one to go back
         note_butt = tk.Button(self, text="Show notes", width=20, height=3,
                                 command=lambda:self.show_note(parent))
 
@@ -477,37 +479,56 @@ class ShowNote(tk.Frame):
         back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(MainPage))
         back_butt.grid(row=15, column= 4, pady=(50,5),padx=200)
 
+
+    # Function to show all the notes of an user
     def show_note(self, parent):
+
+        # It opens the data.json to load the data
         with open("store_login/data.json", "r") as outfile1:
             data3 = json.load(outfile1)
 
+        # It will search in the json for the data of the user and it will save in pwd the password (token of the password) and in iv the iv of the user
         for i in data3:
             if i["name"] == self.user:
                 pwd = i["pwd"]
                 pwd = pwd.encode("latin-1")
                 iv = i["iv"].encode("latin-1")
 
-       
-        
-        
+        # It opens the notes.json to load the data        
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
 
+        # This is the part where it shows the notes of the user after decrypting them
         notes = "\n"
         cont = 1
+
+        # Loop to search in the notes all the notes of the user
         for i in data:
             if i["user"] == self.user:
+
+                # After finding one note of the user it creates the cipher to decrypt the encrypted notes
                 cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
+
+                # It defines the decryptor using AES and CTR using the token of the password and the iv of the user
                 decryptor = cipher.decryptor()
+
+                # It defines the msg that will show in the label of the frame. This msg will contain the j-note decrypted.
                 msg = decryptor.update(i["notes"].encode("latin-1")) + decryptor.finalize()
+
+                # This will update the whole text of notes that will be shown to the user
                 notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + msg.decode("latin-1") + "\n"
                 cont += 1
 
+        # Then it creates the note and places it (with the text that it has been accumulating)
         note = Label(self, text=notes, width=100)
-
         note.grid(row=1,column=4,pady=(50,5),padx=(20,1))
 
+
+#******************************************************************************************
+# Class ShowNote
+#******************************************************************************************
 class DeleteNote(tk.Frame):
+    """ This is the frame for the Delete Note duty """
 
     def __init__(self, parent, controller):
 
@@ -518,13 +539,13 @@ class DeleteNote(tk.Frame):
         # User is none, to have the global user after this (we)
         self.user = None
 
-        # Declaration of the entries for the note and date of the new note
+        # Declaration of the entry date of the note to delete and the buttons to show notes and to delete a note
 
         text_del = Label(self,text = "Introduce the date of the note you want to delete")
         text_del.grid(row = 2, column=0, pady=(50,5), padx = 10)
         
-        entry_note = tk.Entry(self,  width=40)
-        entry_note.grid(row = 2, column = 4, pady=(50,5), padx=10)
+        entry_date = tk.Entry(self,  width=40)
+        entry_date.grid(row = 2, column = 4, pady=(50,5), padx=10)
 
         note_butt = tk.Button(self, text="Show notes", width=20, height=3,
                                 command=lambda:self.show_note(parent))
@@ -540,65 +561,95 @@ class DeleteNote(tk.Frame):
         back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(MainPage))
         back_butt.grid(row=15, column= 4, pady=(50,5))
 
+
+    # Funtion to show the notes
     def show_note(self, parent):
+
+        # It opens the data.json to load the data
         with open("store_login/data.json", "r") as outfile1:
             data3 = json.load(outfile1)
 
+        # It will search in the json for the data of the user and it will save in pwd the password (token of the password) and in iv the iv of the user
         for i in data3:
             if i["name"] == self.user:
                 pwd = i["pwd"]
                 pwd = pwd.encode("latin-1")
                 iv = i["iv"].encode("latin-1")
 
-       
-        
-        
+       # It opens the notes.json to load the data
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
 
+        # This is the part where it shows the notes of the user after decrypting them
         notes = "\n"
         cont = 1
+
+        # Loop to search in the notes all the notes of the user
         for i in data:
             if i["user"] == self.user:
+
+                # After finding one note of the user it creates the cipher to decrypt the encrypted notes
                 cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
+
+                # It defines the decryptor using AES and CTR using the token of the password and the iv of the user
                 decryptor = cipher.decryptor()
+
+                # It defines the msg that will show in the label of the frame. This msg will contain the j-note decrypted.
                 msg = decryptor.update(i["notes"].encode("latin-1")) + decryptor.finalize()
+
+                # This will update the whole text of notes that will be shown to the user
                 notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + msg.decode("latin-1") + "\n"
                 cont += 1
 
-        note = Label(self, text=notes, width=100)
 
+        # Then it creates the note and places it (with the text that it has been accumulating)
+        note = Label(self, text=notes, width=100)
         note.grid(row=1,column=4,pady=(50,5))
     
+    # Function to delete the note with the date "date" of the user notes
     def delete(self, date, parent):
         
+        # It opens the data.json to load the data
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
         
+        # It declarates found to False to check if the note with that date is in the notes.json or not
         found = False
         for i in data:
             if i["user"] == self.user and i["date"] == date:
+
+                # If the note with that date is in the notes.json it simply removes the note 
                 data.remove(i)
                 found = True
             
+        # If found it dumps the new notes in the json (without the note with that date)
         if found:
             with open("store_login/notes.json", "w") as outfile2:
                 json.dump(data, outfile2)
 
+            # It calls to the show_note funtion to update the notes shown
             self.show_note(parent)
+
+        # If the note with that date is not in the notes.json it will show an ERROR
         else:
             messagebox.showinfo(title="Delete Error",message="There is no note with the date: " + date)
 
+
+#******************************************************************************************
+# Class ShowNote
+#******************************************************************************************
 class MainPage(tk.Frame):
-    """ This is the frame for the Main Page duty """
+    """ This is the frame for the Main Page duty, this frame will only show buttons to go to the other frames """
 
     def __init__(self, parent, controller):
         
+        # This will initialize the frame
         tk.Frame.__init__(self, parent)
-        #self.user = SignUp.user
         
+        # User is none, to have the global user after this (we)
         self.user = None
 
+        # The declaration of all the buttons in the main frame which will show the other frames
         note_butt = tk.Button(self, text="Add note/edit note", width=20, height=3,
                                 command=lambda:controller.show_frame(WriteNote,self.user))
 
@@ -612,22 +663,13 @@ class MainPage(tk.Frame):
         
         
         
-
-        note_butt.grid(row=0, column=4,pady=(10,10),padx=200) #padding 200px for top and 10 px for bot
+        # It places all the buttons
+        note_butt.grid(row=0, column=4,pady=(10,10),padx=200)
         note_butt1.grid(row=2, column=4,pady=(10,10),padx=200)
         note_butt2.grid(row=4, column=4,pady=(10,10),padx=200)
         back_butt.grid(row=6, column= 4, pady=(10,10),padx=200)
 
-        
-        
 
-
-    def mostrar_user(self):
-        print("mostrar user: ", self.user)
-
-        
-        
-        
-
+# It initializates the App to mainloop it
 app = MyApp()
 app.mainloop()  
