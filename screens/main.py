@@ -553,7 +553,7 @@ class DeleteNote(tk.Frame):
         note_butt.grid(row= 4,column=4,pady=(50,5))
 
         del_butt = tk.Button(self, text="Delete Note", width=20, height=3,
-                                command=lambda:self.delete(entry_note.get(), parent))
+                                command=lambda:self.delete(entry_date.get(), parent))
 
         del_butt.grid(row= 6,column=4,pady=(50,5))
         
