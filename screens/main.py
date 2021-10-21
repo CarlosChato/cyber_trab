@@ -12,7 +12,9 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
+#******************************************************************************************
 # This is the initial class, which make the principal window and inicialitation of all windows
+#******************************************************************************************
 class MyApp(tk.Tk):
     """ constructor method """ 
     def __init__(self, *args, **kwargs):
@@ -24,8 +26,6 @@ class MyApp(tk.Tk):
         container = tk.Frame(self, highlightcolor="red")
         container.pack( side = "top", fill = "both", expand = True )
 
-        
-
         container.grid_rowconfigure(0,weight = 1)
         container.columnconfigure(0,weight = 1)
 
@@ -34,7 +34,8 @@ class MyApp(tk.Tk):
 
         # Loop to initialize all the classes and save it into a dictionary
         for F in (Home, LogIn, MainPage, SignUp, WriteNote, ShowNote, DeleteNote):#we have to set all the screens into ()
-            
+
+            # Saving the class into the dictionaty            
             frame = F(container,self)
 
             self.frames[F] = frame
@@ -47,6 +48,7 @@ class MyApp(tk.Tk):
         # Function to change the title of the app
         self.make_widgets()
 
+    # Function to set the title into the window, on upper place
     def make_widgets(self):
         
         self.winfo_toplevel().title("My Diario")
@@ -55,12 +57,17 @@ class MyApp(tk.Tk):
     def show_frame(self, cont, user = None):
 
         frame = self.frames[cont]
+
         # If we want to save the user of the other window, the user will be different at None
         if user != None:
             frame.user = user
             
         frame.tkraise()
 
+
+#******************************************************************************************
+# Class Home
+#******************************************************************************************
 class Home(tk.Frame):
     """ Class that will show the initial frame with the login and sign up buttons"""
 
@@ -81,6 +88,9 @@ class Home(tk.Frame):
         sign_up_butt.grid(pady=(10,200),padx=200) #padding like the last one, but inverse
 
 
+#******************************************************************************************
+# Class SignUp
+#******************************************************************************************
 class SignUp(tk.Frame):
     """ This is the frame for the Sign Up duty """
 
@@ -90,6 +100,7 @@ class SignUp(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         # Declaration of the entries for the user, mail and password (twice)
+        # And declaration of the labels to show a message to the user
         user = tk.Label(self, text="user", width=20, height=2)
         entry_name = tk.Entry(self,  width=40)
 
@@ -100,7 +111,7 @@ class SignUp(tk.Frame):
         entry_pass = tk.Entry(self,width=40,show="*")
 
         password2 = tk.Label(self,text="repeat password", width=20)
-        entry_pass2 = tk.Entry(self,width=40,show="*")
+        entry_pass2 = tk.Entry(self,width=40,show="*") # "*" is used to hide the input text
 
         # Button to confirm the data introduced. When clicked: function call to function checks
         sing_up = tk.Button(self, text="Sing Up",width=20, height=2,
@@ -130,8 +141,9 @@ class SignUp(tk.Frame):
         
         back_butt.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
 
+    # Function to check if all parameters introduced by the user are correct or not
     def checks(self, user, email, pass1, pass2, controller):
-        #Checks all the data of the sign up
+        # Checks all the data of the sign up
 
         if pass1 != pass2:
             messagebox.showerror("Error","Passwords have to be the same")
@@ -152,12 +164,16 @@ class SignUp(tk.Frame):
              # If True, the user wasn't found so it adds the user (function call to add_user)
             self.add_user(user, email, pass1, controller)
 
+        # Errors about if the user is already used in the data base
         elif signed=="user":
             messagebox.showerror("Error","User is already registered")
+
         elif signed=="email":
             messagebox.showerror("Error","Email is already registered")
 
+    #Function to add the user into the JSON file
     def add_user(self, user, email, pwd, controller):
+
         # This function will add the user to the data.json with the password passed through the MAC algorithm
         self.user = user
         
@@ -166,6 +182,7 @@ class SignUp(tk.Frame):
         # It generates a random salt to encrypt the password
         salt_pass = os.urandom(16)
 
+        # Define the object about HMAC's class
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -193,10 +210,10 @@ class SignUp(tk.Frame):
         with open("store_login/data.json", "w") as file:
             json.dump(data, file)
     
+        # Change the frame to the MainPage
         controller.show_frame(MainPage, user)
                 
-
-            
+    # Function to check if the user is already signed
     def check_already_signed(self, name, email):
         # This funtion will check if the user is already registered
 
@@ -210,6 +227,7 @@ class SignUp(tk.Frame):
 
                 except:
                     return True
+        # Error if the Json file doesn't exist
         except:
             messagebox.showerror("Error","Error: the file doesn't exist")
 
@@ -222,6 +240,9 @@ class SignUp(tk.Frame):
         return True
 
 
+#******************************************************************************************
+# Class LogIn
+#******************************************************************************************
 class LogIn(tk.Frame):
     """ This is the frame for the Log In duty """
 
@@ -253,7 +274,7 @@ class LogIn(tk.Frame):
 
         back_butt.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
 
-
+    # Function to check the user
     def check_user(self,name,pwd,controller):
         # This function will check if the user is already registered
 
@@ -300,10 +321,14 @@ class LogIn(tk.Frame):
         if found:    
             controller.show_frame(MainPage,name)
 
+        # In other case, it'll show an error message
         else:
             messagebox.showerror("Error","Wrong username or password")
 
 
+#******************************************************************************************
+# Class WriteNote
+#******************************************************************************************
 class WriteNote(tk.Frame):
     """ This is the frame for the Write Note duty """
 
@@ -322,10 +347,14 @@ class WriteNote(tk.Frame):
         date = tk.Label(self, text="date", width=20, height=2)
         entry_date = tk.Entry(self,  width=40)
     
+        # Declaration of the button to add note
         note_butt = tk.Button(self, text="Add Note", width=20, height=3,
                                 command=lambda:self.write_note(entry_note.get(), entry_date.get()))
+
+        # Declaration of the Button to return to the MainPage
         back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(MainPage))
 
+        # ///////////////////UI section, placing the elements//////////////////////////
         note.grid(row=0,column=1,pady=(50,5),padx=(20,1))
         entry_note.grid(row=0,column=4,pady=(50,5))
         date.grid(row=2,column=1,pady=(50,5),padx=(20,1))
@@ -335,38 +364,47 @@ class WriteNote(tk.Frame):
 
         back_butt.grid(row=10, column= 4, pady=(50,5),padx=(20,1))
         
-
-
+    # Function to write a note
     def write_note(self, note, date):
-        
+        # This function will write a note into @notes.json file
+
+        # Declare a var to see if the note is already in the json or not
         is_note = False
         data2 = None
         
+        # Open the data.json to get the salt 
         with open("store_login/data.json", "r") as outfile1:
             data3 = json.load(outfile1)
 
+        # Search to get the pwd token and the iv if it exists
         for i in data3:
             if i["name"] == self.user:
                 pwd = i["pwd"]
+                # the pwd must be byte, so it's encode as latin-1
                 pwd = pwd.encode("latin-1")
+                # Try: if iv exists it's save in "iv" var
                 try:
                     iv = i["iv"].encode("latin-1")
 
-            
+                # If iv doesn't exist, it'll be create
                 except:
+                    # Call to the function to create the iv
                     iv = self.create_salt()
                     iv = iv.encode("latin-1")
-
-        # if random.randint(1,10) == 5:
-        #     new_iv = self.create_salt()
-
+        
+        # Creation a object about Cipher to encrypt the note
+        # The encryption will be AES with CTR 
         cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
         encryptor = cipher.encryptor()
+
+        # Encrypt the note and it'll be return into ct var to save it after the encryption
         ct = encryptor.update(note.encode("latin-1")) + encryptor.finalize()    
         
+        # Open the notes.json file
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
         
+        # Loop to see if the note exists 
         for i in data:
             if i["user"] == self.user and i["date"] == date:
                 is_note = True
@@ -374,17 +412,17 @@ class WriteNote(tk.Frame):
                 data.remove(i)
                 break
         
-        # exists the note of that day
+        # Exists the note of that day
         if is_note:
             data2["notes"] = ct.decode("latin-1")
             data.append(data2)
         
-        # case the note of that day doesn't exist
+        # Case the note of that day doesn't exist
         else:
             data2 = {"user": self.user, "date" : date, "notes": ct.decode("latin-1")}
             data.append(data2)
         
-
+        # Open the notes.json file to save the new note 
         with open("store_login/notes.json", "w") as file:
             json.dump(data, file)
 
@@ -395,7 +433,6 @@ class WriteNote(tk.Frame):
         with open("store_login/data.json", "r") as outfile:
             data3 = json.load(outfile)
 
-        print("tamo aca")
         for i in data3:
             if i["name"] == self.user:
                 iv = iv.decode("latin-1")
