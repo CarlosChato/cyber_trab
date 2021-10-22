@@ -174,13 +174,15 @@ class SignUp(tk.Frame):
     #Function to add the user into the JSON file
     def add_user(self, user, email, pwd, controller):
 
-        # This function will add the user to the data.json with the password passed through the MAC algorithm
+        # This function will add the user to the data.json with the password passed through the HMAC algorithm
         self.user = user
         
         user = user
 
         # It generates a random salt to encrypt the password
         salt_pass = os.urandom(16)
+
+        salt_sim = os.urandom(16)
 
         # Define the object about HMAC's class
         kdf = PBKDF2HMAC(
@@ -200,7 +202,7 @@ class SignUp(tk.Frame):
         salt_pass2 = salt_pass.decode("latin-1")
         
         # It stores the new user data in the data.json
-        data2={"name": user, "pwd": key2, "email": email, "salt_p":salt_pass2}
+        data2={"name": user, "pwd": key2, "email": email, "salt_p":salt_pass2, "salt_sim": salt_sim.decode("latin-1")}
         with open("store_login/data.json", "r") as outfile:
             data = json.load(outfile)
 
@@ -380,6 +382,9 @@ class WriteNote(tk.Frame):
         for i in data3:
             if i["name"] == self.user:
                 pwd = i["pwd"]
+                salt_sim = i["salt_sim"]
+                salt_sim = salt_sim.encode("latin-1")
+
                 # the pwd must be byte, so it's encode as latin-1
                 pwd = pwd.encode("latin-1")
                 # Try: if iv exists it's save in "iv" var
@@ -391,10 +396,21 @@ class WriteNote(tk.Frame):
                     # Call to the function to create the iv
                     iv = self.create_salt()
                     iv = iv.encode("latin-1")
+
+        # Define the object about HMAC's class
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt_sim,
+            iterations=100000,
+        )
+
+        # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
+        key = kdf.derive(pwd)
         
         # Creation a object about Cipher to encrypt the note
         # The encryption will be AES with CTR 
-        cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
+        cipher = Cipher(algorithms.AES(key), modes.CTR(iv))
         encryptor = cipher.encryptor()
 
         # Encrypt the note and it'll be return into ct var to save it after the encryption
@@ -491,8 +507,21 @@ class ShowNote(tk.Frame):
         for i in data3:
             if i["name"] == self.user:
                 pwd = i["pwd"]
+                salt_sim = i["salt_sim"]
+                salt_sim = salt_sim.encode("latin-1")
                 pwd = pwd.encode("latin-1")
                 iv = i["iv"].encode("latin-1")
+
+        # Defines the object about HMAC's class
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt_sim,
+            iterations=100000,
+        )
+
+        # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
+        key = kdf.derive(pwd)
 
         # It opens the notes.json to load the data        
         with open("store_login/notes.json", "r") as outfile:
@@ -507,7 +536,7 @@ class ShowNote(tk.Frame):
             if i["user"] == self.user:
 
                 # After finding one note of the user it creates the cipher to decrypt the encrypted notes
-                cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
+                cipher = Cipher(algorithms.AES(key), modes.CTR(iv))
 
                 # It defines the decryptor using AES and CTR using the token of the password and the iv of the user
                 decryptor = cipher.decryptor()
@@ -562,7 +591,7 @@ class DeleteNote(tk.Frame):
         back_butt.grid(row=15, column= 4, pady=(50,5))
 
 
-    # Funtion to show the notes
+    # Function to show all the notes of an user
     def show_note(self, parent):
 
         # It opens the data.json to load the data
@@ -573,10 +602,23 @@ class DeleteNote(tk.Frame):
         for i in data3:
             if i["name"] == self.user:
                 pwd = i["pwd"]
+                salt_sim = i["salt_sim"]
+                salt_sim = salt_sim.encode("latin-1")
                 pwd = pwd.encode("latin-1")
                 iv = i["iv"].encode("latin-1")
 
-       # It opens the notes.json to load the data
+        # Defines the object about HMAC's class
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt_sim,
+            iterations=100000,
+        )
+
+        # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
+        key = kdf.derive(pwd)
+
+        # It opens the notes.json to load the data        
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
 
@@ -589,7 +631,7 @@ class DeleteNote(tk.Frame):
             if i["user"] == self.user:
 
                 # After finding one note of the user it creates the cipher to decrypt the encrypted notes
-                cipher = Cipher(algorithms.AES(pwd), modes.CTR(iv))
+                cipher = Cipher(algorithms.AES(key), modes.CTR(iv))
 
                 # It defines the decryptor using AES and CTR using the token of the password and the iv of the user
                 decryptor = cipher.decryptor()
@@ -601,10 +643,9 @@ class DeleteNote(tk.Frame):
                 notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + msg.decode("latin-1") + "\n"
                 cont += 1
 
-
         # Then it creates the note and places it (with the text that it has been accumulating)
         note = Label(self, text=notes, width=100)
-        note.grid(row=1,column=4,pady=(50,5))
+        note.grid(row=1,column=4,pady=(50,5),padx=(20,1))
     
     # Function to delete the note with the date "date" of the user notes
     def delete(self, date, parent):
