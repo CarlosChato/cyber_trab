@@ -7,7 +7,7 @@ from tkinter import Entry, Label, messagebox, ttk
 from tkinter.constants import SINGLE
 
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -407,6 +407,14 @@ class WriteNote(tk.Frame):
 
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
         key = kdf.derive(pwd)
+
+        # Create the object of the mac class where it's used the key and sha 256 to generate the mac about note
+        h = hmac.HMAC(key, hashes.SHA256())
+
+        # Here we make the mac of the note
+        h.update(note.encode("latin-1"))
+        note_mac = h.finalize()
+        
         
         # Creation a object about Cipher to encrypt the note
         # The encryption will be AES with CTR 
@@ -430,12 +438,14 @@ class WriteNote(tk.Frame):
         
         # Exists the note of that day
         if is_note:
+            
             data2["notes"] = ct.decode("latin-1")
-            data.append(data2)
+            data2["mac"] = note_mac.decode("latin-1")
+            data.append(data2) 
         
         # Case the note of that day doesn't exist
         else:
-            data2 = {"user": self.user, "date" : date, "notes": ct.decode("latin-1")}
+            data2 = {"user": self.user, "date" : date, "notes": ct.decode("latin-1"), "mac":note_mac.decode("latin-1")}
             data.append(data2)
         
         # Open the notes.json file to save the new note 
@@ -523,6 +533,8 @@ class ShowNote(tk.Frame):
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
         key = kdf.derive(pwd)
 
+        
+
         # It opens the notes.json to load the data        
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
@@ -543,6 +555,23 @@ class ShowNote(tk.Frame):
 
                 # It defines the msg that will show in the label of the frame. This msg will contain the j-note decrypted.
                 msg = decryptor.update(i["notes"].encode("latin-1")) + decryptor.finalize()
+
+                # Create the object af Hmac with the key (provided of the hash pwd) and sha 256
+                h = hmac.HMAC(key, hashes.SHA256())
+
+                # Hmac of the msg to compare after that with the hmac of the json file
+                h.update(msg)
+
+                # Get the mac of the json
+                note_mac = i["mac"].encode("latin-1")
+                
+                # Check if the msg is the same to hace integrity with the notes
+                try:
+                    h.verify(note_mac)
+
+                except:
+                    messagebox.showerror("error","Something was wrong with the note :(")
+                
 
                 # This will update the whole text of notes that will be shown to the user
                 notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + msg.decode("latin-1") + "\n"
