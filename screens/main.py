@@ -147,15 +147,19 @@ class SignUp(tk.Frame):
 
         if pass1 != pass2:
             messagebox.showerror("Error","Passwords have to be the same")
+            return
 
         if len(pass1) <=5:
             messagebox.showerror("Error","Passwords have to have five caracters minimun")
+            return
         
         if len(email)<= 0:
             messagebox.showerror("Error","It isn't an email")
+            return
 
         if len(user) <= 0:
             messagebox.showerror("Error","You have to set an username")
+            return
         
         # Function call to check_already_singed to see if the user was already in
         signed = self.check_already_signed(user,email)
