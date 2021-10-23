@@ -647,6 +647,8 @@ class DeleteNote(tk.Frame):
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
         key = kdf.derive(pwd)
 
+        
+
         # It opens the notes.json to load the data        
         with open("store_login/notes.json", "r") as outfile:
             data = json.load(outfile)
@@ -667,6 +669,23 @@ class DeleteNote(tk.Frame):
 
                 # It defines the msg that will show in the label of the frame. This msg will contain the j-note decrypted.
                 msg = decryptor.update(i["notes"].encode("latin-1")) + decryptor.finalize()
+
+                # Create the object af Hmac with the key (provided of the hash pwd) and sha 256
+                h = hmac.HMAC(key, hashes.SHA256())
+
+                # Hmac of the msg to compare after that with the hmac of the json file
+                h.update(msg)
+
+                # Get the mac of the json
+                note_mac = i["mac"].encode("latin-1")
+                
+                # Check if the msg is the same to hace integrity with the notes
+                try:
+                    h.verify(note_mac)
+
+                except:
+                    messagebox.showerror("error","Something was wrong with the note :(")
+                
 
                 # This will update the whole text of notes that will be shown to the user
                 notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + msg.decode("latin-1") + "\n"
