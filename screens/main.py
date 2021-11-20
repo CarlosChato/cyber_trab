@@ -54,13 +54,16 @@ class MyApp(tk.Tk):
         self.winfo_toplevel().title("My Diario")
     
     # Function to change the differents frames when it'll necessary
-    def show_frame(self, cont, user = None):
+    def show_frame(self, cont, user = None, psw = None):
 
         frame = self.frames[cont]
 
         # If we want to save the user of the other window, the user will be different at None
         if user != None:
             frame.user = user
+
+        if psw != None:
+            frame.psw = psw
             
         frame.tkraise()
 
@@ -181,8 +184,6 @@ class SignUp(tk.Frame):
         # This function will add the user to the data.json with the password passed through the HMAC algorithm
         self.user = user
         
-        user = user
-
         # It generates a random salt to encrypt the password
         salt_pass = os.urandom(16)
 
@@ -217,7 +218,7 @@ class SignUp(tk.Frame):
             json.dump(data, file)
     
         # Change the frame to the MainPage
-        controller.show_frame(MainPage, user)
+        controller.show_frame(MainPage, user, pwd)
                 
     # Function to check if the user is already signed
     def check_already_signed(self, name, email):
@@ -325,7 +326,7 @@ class LogIn(tk.Frame):
         # If the encryption is a success, the comparition of the encrypted pwd and the password given is correct and the user has been found,
         # the MainPage frame will be shown
         if found:    
-            controller.show_frame(MainPage,name)
+            controller.show_frame(MainPage,name,pwd)
 
         # In other case, it'll show an error message
         else:
@@ -346,6 +347,8 @@ class WriteNote(tk.Frame):
 
         # User is none, to have the global user after this (we)
         self.user = None
+
+        self.pwd = None
 
         # Declaration of the entries for the note and date of the new note
         note = tk.Label(self, text="note", width=20, height=2)
@@ -385,12 +388,12 @@ class WriteNote(tk.Frame):
         # Search to get the pwd token and the iv if it exists
         for i in data3:
             if i["name"] == self.user:
-                pwd = i["pwd"]
+                #pwd = i["pwd"]
                 salt_sim = i["salt_sim"]
                 salt_sim = salt_sim.encode("latin-1")
 
                 # the pwd must be byte, so it's encode as latin-1
-                pwd = pwd.encode("latin-1")
+                pwd = self.pwd.encode("latin-1")
                 # Try: if iv exists it's save in "iv" var
                 try:
                     iv = i["iv"].encode("latin-1")
@@ -406,7 +409,7 @@ class WriteNote(tk.Frame):
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt_sim,
-            iterations=100000,
+            iterations=2000000,
         )
 
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
@@ -498,6 +501,7 @@ class ShowNote(tk.Frame):
 
         # User is none, to have the global user after this
         self.user = None
+        self.pwd = None
 
         # We create two buttons, one to show all the notes and the other one to go back
         note_butt = tk.Button(self, text="Show notes", width=20, height=3,
@@ -520,10 +524,10 @@ class ShowNote(tk.Frame):
         # It will search in the json for the data of the user and it will save in pwd the password (token of the password) and in iv the iv of the user
         for i in data3:
             if i["name"] == self.user:
-                pwd = i["pwd"]
+                #pwd = i["pwd"]
                 salt_sim = i["salt_sim"]
                 salt_sim = salt_sim.encode("latin-1")
-                pwd = pwd.encode("latin-1")
+                pwd = self.pwd.encode("latin-1")
                 iv = i["iv"].encode("latin-1")
 
         # Defines the object about HMAC's class
@@ -531,7 +535,7 @@ class ShowNote(tk.Frame):
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt_sim,
-            iterations=100000,
+            iterations=2000000,
         )
 
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
@@ -600,6 +604,7 @@ class DeleteNote(tk.Frame):
 
         # User is none, to have the global user after this (we)
         self.user = None
+        self.pwd = None
 
         # Declaration of the entry date of the note to delete and the buttons to show notes and to delete a note
 
@@ -634,10 +639,10 @@ class DeleteNote(tk.Frame):
         # It will search in the json for the data of the user and it will save in pwd the password (token of the password) and in iv the iv of the user
         for i in data3:
             if i["name"] == self.user:
-                pwd = i["pwd"]
+                #pwd = i["pwd"]
                 salt_sim = i["salt_sim"]
                 salt_sim = salt_sim.encode("latin-1")
-                pwd = pwd.encode("latin-1")
+                pwd = self.pwd.encode("latin-1")
                 iv = i["iv"].encode("latin-1")
 
         # Defines the object about HMAC's class
@@ -645,7 +650,7 @@ class DeleteNote(tk.Frame):
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt_sim,
-            iterations=100000,
+            iterations=2000000,
         )
 
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
@@ -739,18 +744,19 @@ class MainPage(tk.Frame):
         # This will initialize the frame
         tk.Frame.__init__(self, parent)
         
-        # User is none, to have the global user after this (we)
+        # User and pwd are none, to have the global user after this
         self.user = None
+        self.pwd = None
 
         # The declaration of all the buttons in the main frame which will show the other frames
         note_butt = tk.Button(self, text="Add note/edit note", width=20, height=3,
-                                command=lambda:controller.show_frame(WriteNote,self.user))
+                                command=lambda:controller.show_frame(WriteNote,self.user, self.pwd))
 
         note_butt1 = tk.Button(self, text="Show notes", width=20, height=3,
-                                command=lambda:controller.show_frame(ShowNote,self.user))
+                                command=lambda:controller.show_frame(ShowNote,self.user, self.pwd))
         
         note_butt2 = tk.Button(self, text="Delete note", width=20, height=3,
-                                command=lambda:controller.show_frame(DeleteNote,self.user))
+                                command=lambda:controller.show_frame(DeleteNote,self.user, self.pwd))
                                 
         back_butt = tk.Button(self, text="Cerrar sesión", width=20, height=2, command=lambda:controller.show_frame(Home))
         
