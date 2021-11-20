@@ -54,7 +54,7 @@ class MyApp(tk.Tk):
         self.winfo_toplevel().title("My Diario")
     
     # Function to change the differents frames when it'll necessary
-    def show_frame(self, cont, user = None, psw = None):
+    def show_frame(self, cont, user = None, pwd = None):
 
         frame = self.frames[cont]
 
@@ -62,8 +62,8 @@ class MyApp(tk.Tk):
         if user != None:
             frame.user = user
 
-        if psw != None:
-            frame.psw = psw
+        if pwd != None:
+            frame.pwd = pwd
             
         frame.tkraise()
 
