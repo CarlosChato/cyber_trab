@@ -409,7 +409,7 @@ class WriteNote(tk.Frame):
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt_sim,
-            iterations=2000000,
+            iterations=200000,
         )
 
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
@@ -535,7 +535,7 @@ class ShowNote(tk.Frame):
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt_sim,
-            iterations=2000000,
+            iterations=200000,
         )
 
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
@@ -650,7 +650,7 @@ class DeleteNote(tk.Frame):
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt_sim,
-            iterations=2000000,
+            iterations=200000,
         )
 
         # The password is derivated by encoding it to latin-1 and then derive it with the kdf algorithm already defined
