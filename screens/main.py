@@ -10,13 +10,25 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes, hmac, serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
 
 #******************************************************************************************
 # 👻  Esto no existe  👻
 #******************************************************************************************
 global passAd 
 passAd = "@HdB56hDm#"
+#******************************************************************************************
+#******************************************************************************************
+
+# This function will obtain the <object private_key> that was stored in the .pem file
+def load_private_key():
+    with open("rsa/key_private.pem", "rb") as key_file:
+        private_key = serialization.load_pem_private_key(
+            key_file.read(),
+            password=passAd.encode("latin-1"),
+        )
+    return private_key
+
 
 #******************************************************************************************
 # This is the initial class, which make the principal window and inicialitation of all windows
@@ -54,14 +66,14 @@ class MyApp(tk.Tk):
         # Function to change the title of the app
         self.make_widgets()
 
+        # check if the private and public key exists
         try:
             open("rsa/key_private.pem", "rb")
             open("rsa/key_public.pem", "rb")
                 
         except:
+            # If it doesnt exist, generate both keys
             self.rsa_keys()
-        
-        print(self.load_private_key())
 
     # Function to set the title into the window, on upper place
     def make_widgets(self):
@@ -89,35 +101,36 @@ class MyApp(tk.Tk):
             key_size=2048,
         )
         self.serialize_rsa_keys()
-        #print(private_key)
 
-    
+    # Function to serialize the admin private and public keys
     def serialize_rsa_keys(self):
+
+        # It creates the pem with the private key
         pem_pv = self.private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
+
+            # It uses the password of the admin to serialize it
             encryption_algorithm=serialization.BestAvailableEncryption(passAd.encode("latin-1"))
         )
 
+        # Then it stores it in its respective .pem file
         with open("rsa/key_private.pem", "wb") as file:
             file.write(pem_pv)
 
+
+        # It obtains the public key with the private key
         public_key = self.private_key.public_key()
+
+        # It creates the pem with the public key
         pem_pb = public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )            
+        )
 
+        # Then it stores it in its respective .pem file
         with open("rsa/key_public.pem", "wb") as file:
             file.write(pem_pb)
-
-    def load_private_key(self):
-        with open("rsa/key_private.pem", "rb") as key_file:
-            private_key = serialization.load_pem_private_key(
-                key_file.read(),
-                password=passAd.encode("latin-1"),
-            )
-        return private_key
 
 #******************************************************************************************
 # Class Home
@@ -557,17 +570,20 @@ class ShowNote(tk.Frame):
         # We create two buttons, one to show all the notes and the other one to go back
         note_butt = tk.Button(self, text="Show notes", width=20, height=3,
                                 command=lambda:self.show_note(parent))
+        print_butt = tk.Button(self, text="Print notes", width=20, height=3,
+                                command=lambda:self.print_note())
+        verify_butt = tk.Button(self, text="Verify notes", width=20, height=3,
+                                command=lambda:self.verify_note())
 
         note_butt.grid(row= 4,column=4,pady=(50,5),padx=200)
+        print_butt.grid(row= 6,column=4,pady=(50,5),padx=200)
+        verify_butt.grid(row= 8,column=4,pady=(50,5),padx=200)
         
         # This is the return button
         back_butt = tk.Button(self, text="Go back", width=20, height=2, command=lambda:controller.show_frame(MainPage))
         back_butt.grid(row=15, column= 4, pady=(50,5),padx=200)
 
-
-    # Function to show all the notes of an user
-    def show_note(self, parent):
-
+    def obtain_note(self):
         # It opens the data.json to load the data
         with open("store_login/data.json", "r") as outfile1:
             data3 = json.load(outfile1)
@@ -635,11 +651,69 @@ class ShowNote(tk.Frame):
                 # This will update the whole text of notes that will be shown to the user
                 notes += "Nota " + str(cont) + ": Date: " + i["date"] + ", Nota: " + msg.decode("latin-1") + "\n"
                 cont += 1
+        return notes
+
+    # Function to show all the notes of an user
+    def show_note(self, parent):
+
+        notes = self.obtain_note()
 
         # Then it creates the note and places it (with the text that it has been accumulating)
         note = Label(self, text=notes, width=100)
         note.grid(row=1,column=4,pady=(50,5),padx=(20,1))
 
+    def print_note(self):
+        
+        notes = self.obtain_note()
+
+        private_key = load_private_key()
+
+        signature = private_key.sign(
+            notes.encode("latin-1"),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        
+        base64_signature = base64.b64encode(signature)
+        ascii_base64_signature = base64_signature.decode("ascii")
+                
+        with open("signatures/" + str(self.user) + "_signature.sig", "w+") as file:
+            file.write(ascii_base64_signature)
+
+    def verify_note(self):
+
+        notes = self.obtain_note()
+
+        private_key = load_private_key()
+
+        public_key = private_key.public_key()
+
+        try:
+            with open("signatures/" + str(self.user) + "_signature.sig", "r+") as file:
+                ascii_base64_signature = file.read()
+        except:
+            messagebox.showerror("ERROR", "Before verifying the signature you have to print the notes (signed)")
+            return
+        
+        base64_signature = ascii_base64_signature.encode("ascii")
+        signature= base64.b64decode(base64_signature)
+        
+        try:
+            public_key.verify(
+                signature,
+                notes.encode("latin-1"),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+            messagebox.showinfo(title="OK", message="The sign was verified successfully")
+        except:
+            messagebox.showerror("ERROR", "Invalid sign")
 
 #******************************************************************************************
 # Class ShowNote
