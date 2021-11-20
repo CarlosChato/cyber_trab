@@ -60,6 +60,8 @@ class MyApp(tk.Tk):
                 
         except:
             self.rsa_keys()
+        
+        print(self.load_private_key())
 
     # Function to set the title into the window, on upper place
     def make_widgets(self):
@@ -108,6 +110,14 @@ class MyApp(tk.Tk):
 
         with open("rsa/key_public.pem", "wb") as file:
             file.write(pem_pb)
+
+    def load_private_key(self):
+        with open("rsa/key_private.pem", "rb") as key_file:
+            private_key = serialization.load_pem_private_key(
+                key_file.read(),
+                password=passAd.encode("latin-1"),
+            )
+        return private_key
 
 #******************************************************************************************
 # Class Home
