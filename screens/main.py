@@ -7,10 +7,16 @@ from tkinter import Entry, Label, messagebox, ttk
 from tkinter.constants import SINGLE
 
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.hazmat.primitives import hashes, hmac, serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.asymmetric import rsa
 
+#******************************************************************************************
+# 👻  Esto no existe  👻
+#******************************************************************************************
+global passAd 
+passAd = "@HdB56hDm#"
 
 #******************************************************************************************
 # This is the initial class, which make the principal window and inicialitation of all windows
@@ -48,6 +54,13 @@ class MyApp(tk.Tk):
         # Function to change the title of the app
         self.make_widgets()
 
+        try:
+            open("rsa/key_private.pem", "rb")
+            open("rsa/key_public.pem", "rb")
+                
+        except:
+            self.rsa_keys()
+
     # Function to set the title into the window, on upper place
     def make_widgets(self):
         
@@ -67,6 +80,34 @@ class MyApp(tk.Tk):
             
         frame.tkraise()
 
+    # Function to create the admin private key
+    def rsa_keys(self):
+        self.private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+        self.serialize_rsa_keys()
+        #print(private_key)
+
+    
+    def serialize_rsa_keys(self):
+        pem_pv = self.private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.BestAvailableEncryption(passAd.encode("latin-1"))
+        )
+
+        with open("rsa/key_private.pem", "wb") as file:
+            file.write(pem_pv)
+
+        public_key = self.private_key.public_key()
+        pem_pb = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )            
+
+        with open("rsa/key_public.pem", "wb") as file:
+            file.write(pem_pb)
 
 #******************************************************************************************
 # Class Home
