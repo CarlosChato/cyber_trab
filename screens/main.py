@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography import x509
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 #******************************************************************************************
 # 👻  Esto no existe  👻
@@ -734,18 +735,23 @@ class ShowNote(tk.Frame):
         with open("MyDiario/MyDiario_cert.pem", "rb") as file2:
                 cert = file2.read()
         
-        #try:
-        self.verify_single_key(cert)
-            #messagebox.showinfo(title="OK",message="The PKI's MyDiario certificate is correct")
-        #except:
-            #messagebox.showerror("ERROR", "The MyDiario's certificate is not correct")
+        try:
+            self.verify_single_key(cert)
+            messagebox.showinfo(title="OK",message="The PKI's MyDiario certificate is correct")
+        except:
+            messagebox.showerror("ERROR", "The MyDiario's certificate is not correct")
 
     def verify_single_key(self, cert):
 
-        ac1_cert = x509.load_pem_x509_certificate(cert)
+        key_cert = x509.load_pem_x509_certificate(cert)
 
-        issuer_public_key = ac1_cert.public_key()
-        cert_to_check = ac1_cert
+        with open("AC1/ac1cert.pem", "rb") as file:
+                cert2 = file.read()
+        
+        key_cert2 = x509.load_pem_x509_certificate(cert2)
+        issuer_public_key = key_cert2.public_key()
+
+        cert_to_check = key_cert
 
         issuer_public_key.verify(
                 cert_to_check.signature,
