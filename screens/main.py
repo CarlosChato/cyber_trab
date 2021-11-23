@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives import hashes, hmac, serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography import x509
 
 #******************************************************************************************
 # 👻  Esto no existe  👻
@@ -714,6 +715,44 @@ class ShowNote(tk.Frame):
             messagebox.showinfo(title="OK", message="The sign was verified successfully")
         except:
             messagebox.showerror("ERROR", "Invalid sign")
+
+        self.verify_keys()
+
+    def verify_keys(self):
+
+        
+        with open("AC1/ac1cert.pem", "rb") as file:
+                cert = file.read()
+
+        try:
+            self.verify_single_key(cert)
+            messagebox.showinfo(title="OK",message="The PKI's AC1 certificate is correct")
+        except:
+            messagebox.showerror("ERROR", "The PKI's AC1 certificate is not correct")
+
+
+        with open("MyDiario/MyDiario_cert.pem", "rb") as file2:
+                cert = file2.read()
+        
+        #try:
+        self.verify_single_key(cert)
+            #messagebox.showinfo(title="OK",message="The PKI's MyDiario certificate is correct")
+        #except:
+            #messagebox.showerror("ERROR", "The MyDiario's certificate is not correct")
+
+    def verify_single_key(self, cert):
+
+        ac1_cert = x509.load_pem_x509_certificate(cert)
+
+        issuer_public_key = ac1_cert.public_key()
+        cert_to_check = ac1_cert
+
+        issuer_public_key.verify(
+                cert_to_check.signature,
+                cert_to_check.tbs_certificate_bytes,
+                padding.PKCS1v15(),
+                cert_to_check.signature_hash_algorithm,
+            )
 
 #******************************************************************************************
 # Class ShowNote
