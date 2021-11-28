@@ -664,12 +664,16 @@ class ShowNote(tk.Frame):
         note = Label(self, text=notes, width=100)
         note.grid(row=1,column=4,pady=(50,5),padx=(20,1))
 
+    # Function to generate a file with the notes, this notes will be sign by the app
     def print_note(self):
         
+        # First of all we have to obtein the notes, that notes are save in the json
         notes = self.obtain_note()
 
+        # Load the private key, to sign the document
         private_key = load_private_key()
 
+        # Use the signature to sign the document
         signature = private_key.sign(
             notes.encode("latin-1"),
             padding.PSS(
@@ -678,21 +682,28 @@ class ShowNote(tk.Frame):
             ),
             hashes.SHA256()
         )
-        
+
+        # Encode in base64 to convert after that to ascii code to generate a file.sig
         base64_signature = base64.b64encode(signature)
         ascii_base64_signature = base64_signature.decode("ascii")
                 
+        # Save the file in signature folfer
         with open("signatures/" + str(self.user) + "_signature.sig", "w+") as file:
             file.write(ascii_base64_signature)
 
+    # Function to verify the document that was generated before in the function print_note
     def verify_note(self):
 
+        # It obtains the notes from the user
         notes = self.obtain_note()
 
+        # Loads the private key from the main entity
         private_key = load_private_key()
 
+        # Loads the public key from the main entity by the private key
         public_key = private_key.public_key()
-
+        
+        # It tries to read the signature for the user, if it does not find the signature => Error
         try:
             with open("signatures/" + str(self.user) + "_signature.sig", "r+") as file:
                 ascii_base64_signature = file.read()
@@ -700,9 +711,11 @@ class ShowNote(tk.Frame):
             messagebox.showerror("ERROR", "Before verifying the signature you have to print the notes (signed)")
             return
         
+        # Decode of the signature to work with it
         base64_signature = ascii_base64_signature.encode("ascii")
         signature= base64.b64decode(base64_signature)
         
+        # It tries to verify the signature
         try:
             public_key.verify(
                 signature,
@@ -714,33 +727,43 @@ class ShowNote(tk.Frame):
                 hashes.SHA256()
             )
             messagebox.showinfo(title="OK", message="The sign was verified successfully")
+            
+        # If it is not correct => Error
         except:
             messagebox.showerror("ERROR", "Invalid sign")
 
         self.verify_keys()
 
+    # Funtion to verify all the keys generated to sign and cert
     def verify_keys(self):
 
-        
+        # Open the AC1's key (cert)     
         with open("AC1/ac1cert.pem", "rb") as file:
                 cert = file.read()
 
+        # Try to verify AC1's key
         try:
+            # Message if it's correct
             self.verify_single_key(cert)
             messagebox.showinfo(title="OK",message="The PKI's AC1 certificate is correct")
         except:
+            # Message if the key is not correct
             messagebox.showerror("ERROR", "The PKI's AC1 certificate is not correct")
 
-
+        # Open the MyDiario's key (public) this is cert, we test that the cert is correct
         with open("MyDiario/MyDiario_cert.pem", "rb") as file2:
                 cert = file2.read()
         
+        # Try to verify the MyDiario's key
         try:
+            # If it's correct we show a message
             self.verify_single_key(cert)
             messagebox.showinfo(title="OK",message="The PKI's MyDiario certificate is correct")
         except:
+            # In other case, we show an error message
             messagebox.showerror("ERROR", "The MyDiario's certificate is not correct")
 
+    # Function to verify a single certificate
     def verify_single_key(self, cert):
 
         key_cert = x509.load_pem_x509_certificate(cert)
