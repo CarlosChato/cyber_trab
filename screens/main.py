@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import random
+import re
 import tkinter as tk
 from tkinter import Entry, Label, messagebox, ttk
 from tkinter.constants import SINGLE
@@ -217,19 +218,23 @@ class SignUp(tk.Frame):
         if pass1 != pass2:
             messagebox.showerror("Error","Passwords have to be the same")
             return
-
-        if len(pass1) <=5:
-            messagebox.showerror("Error","Passwords have to have five caracters minimun")
-            return
         
         if len(email)<= 0:
-            messagebox.showerror("Error","It isn't an email")
+            messagebox.showerror("Error","That is not an email")
             return
 
         if len(user) <= 0:
             messagebox.showerror("Error","You have to set an username")
             return
         
+        if not re.search(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", email):
+            messagebox.showerror("Error","The email is not correct")
+            return
+
+        if not re.search(r"(^([a-zA-Z0-9@*#]{6,15})$)", pass1):
+            messagebox.showerror("Error","The password must have at least 6 characters and maximum of 15 including a number")
+            return
+
         # Function call to check_already_singed to see if the user was already in
         signed = self.check_already_signed(user,email)
 
@@ -442,6 +447,9 @@ class WriteNote(tk.Frame):
     # Function to write a note
     def write_note(self, note, date):
         # This function will write a note into @notes.json file
+
+        if not re.search(r"(^(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d)$", date):
+            messagebox.showerror("error", "The date is not correct")
 
         # Declare a var to see if the note is already in the json or not
         is_note = False
@@ -923,7 +931,7 @@ class DeleteNote(tk.Frame):
 
         # If the note with that date is not in the notes.json it will show an ERROR
         else:
-            messagebox.showinfo(title="Delete Error",message="There is no note with the date: " + date)
+            messagebox.showerror(title="Delete Error",message="There is no note with the date: " + date)
 
 
 #******************************************************************************************
