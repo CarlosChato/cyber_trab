@@ -605,7 +605,10 @@ class ShowNote(tk.Frame):
                 salt_sim = i["salt_sim"]
                 salt_sim = salt_sim.encode("latin-1")
                 pwd = self.pwd.encode("latin-1")
-                iv = i["iv"].encode("latin-1")
+                try:
+                    iv = i["iv"].encode("latin-1")
+                except:
+                    messagebox.showerror("ERROR", "You do not have any notes to show")
 
         # Defines the object about HMAC's class
         kdf = PBKDF2HMAC(
@@ -844,7 +847,10 @@ class DeleteNote(tk.Frame):
                 salt_sim = i["salt_sim"]
                 salt_sim = salt_sim.encode("latin-1")
                 pwd = self.pwd.encode("latin-1")
-                iv = i["iv"].encode("latin-1")
+                try:
+                    iv = i["iv"].encode("latin-1")
+                except:
+                    messagebox.showerror("ERROR", "You do not have any notes to show")
 
         # Defines the object about HMAC's class
         kdf = PBKDF2HMAC(
